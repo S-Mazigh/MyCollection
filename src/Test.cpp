@@ -111,6 +111,7 @@ int main (int argc, char *argv[]) {
     mytestCollection.mergeSortRecursive(false);
     
     end = std::chrono::system_clock::now();
+    //std::cout << "After Merge Sort: " << mytestCollection << std::endl;
     orderCheck = checkingOrder(mytestCollection.getCollection(), forChecking.getCollection());
 
     result_print.str(" "); // to clear the stream we need to replace the underlying string
@@ -125,12 +126,16 @@ int main (int argc, char *argv[]) {
 
 template <typename T>
 bool checkingOrder(std::vector<T> const &a, std::vector<T> const &b) {
-    if(a.size() != b.size())
+    if(a.size() != b.size()){
+        //std::cout << "Different sizes" << std::endl;
         return false;
-    
+    }
+
     for(int i=0; i<a.size(); i++) {
-        if(a[i] != b[i])
+        if(a[i] != b[i]) {
+            //std::cout << "Probleme at ["<< i <<"] where a[" << i << "] = " << a[i] << " and b[" << i << "] = " << b[i] << std::endl;
             return false;
+        }
     }
     return true;
 }

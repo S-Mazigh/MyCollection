@@ -97,20 +97,20 @@ namespace mycollections
 
     template <typename T>
     MyCollection<T>::MyCollection(MyCollection &other): collection(other.collection), sorted(other.sorted), ascending(other.ascending) {
-        std::cout<<"Other collection is at " << &other.collection[0] << " while this' collection is at: " << &this->collection[0] << std::endl;
+        //std::cout<<"Other collection is at " << &other.collection[0] << " while this' collection is at: " << &this->collection[0] << std::endl;
     }
 
     template <typename T>
     MyCollection<T>::~MyCollection()
     {
         /* does nothing */
-        //std::cout << "Bye cruel world!" << std::endl;
+        std::cout << "Bye cruel world!" << std::endl;
     }
 
     template <typename T>
     inline void swap(T &val1, T &val2)
     {
-        // //std::cout << val1 <<" <-> "<< val2 << std::endl;
+        // std::cout << val1 <<" <-> "<< val2 << std::endl;
         T tmp = val1;
         val1 = val2;
         val2 = tmp;
@@ -124,7 +124,7 @@ namespace mycollections
     {
         if (this->sorted && !(ascending ^ this->ascending)) // if already sorted in wanted order: !(a^b) means a==b.
         {
-            //std::cout << "Collection is already sorted!" << std::endl;
+            std::cout << "Collection is already sorted!" << std::endl;
             return;
         }
         this->ascending = ascending;
@@ -175,7 +175,7 @@ namespace mycollections
     {
         if (this->sorted && !(ascending ^ this->ascending)) // if already sorted in wanted order: !(a^b) means a==b.
         {
-            //std::cout << "Collection is already sorted!" << std::endl;
+            std::cout << "Collection is already sorted!" << std::endl;
             return;
         }
 
@@ -246,7 +246,7 @@ namespace mycollections
     {
         if (this->sorted && !(ascending ^ this->ascending)) // if already sorted in wanted order: !(a^b) means a==b.
         {
-            //std::cout << "Collection is already sorted!" << std::endl;
+            std::cout << "Collection is already sorted!" << std::endl;
             return;
         }
         this->ascending = ascending;
@@ -355,10 +355,6 @@ namespace mycollections
         }
 
         //std::cout << " Recursion: left:"<< leftSize << ", right:" << rightSize << std::endl;
-        //std::cout << " Left Array: "<<std::endl;
-        //print_array(leftArray, leftSize);
-        //std::cout << " Right Array: "<<std::endl;
-        //print_array(rightArray, rightSize);
         // recursion: going down
         trueMergeSortRecursiveAscending(leftArray, (leftSize-1) / 2, leftSize - 1);
         trueMergeSortRecursiveAscending(rightArray, (rightSize-1) / 2, rightSize - 1);
@@ -376,6 +372,13 @@ namespace mycollections
          * On ajoute à chaque fois l'element le plus petit (grand) entre les premiers elements de chaque subarray
          * Il suffit de comparer les premiers elements de chaque subarray parce qu'on est sur qu'il sont triés
          */
+
+        //std::cout << "Merging" << std::endl;
+        //std::cout << " Left Array: "<<std::endl;
+        //print_array(leftArray, leftSize);
+        //std::cout << " Right Array: "<<std::endl;
+        //print_array(rightArray, rightSize);
+
         for (int i = 0; i < mergedSize; i++)
         { // ascending order
             if (leftIndex >= leftSize || rightIndex >= rightSize)
@@ -383,12 +386,12 @@ namespace mycollections
                 mergedIndex = i;
                 break; // break if one subarray has no more elements
             }
-            if (leftArray[leftIndex] < rightArray[rightIndex])
+            if (leftArray[leftIndex] <= rightArray[rightIndex])
             {
                 collection[i] = leftArray[leftIndex];
                 leftIndex++;
             }
-            else if (rightArray[rightIndex] < leftArray[leftIndex])
+            else //if (rightArray[rightIndex] < leftArray[leftIndex])
             {
                 collection[i] = rightArray[rightIndex];
                 rightIndex++;
@@ -450,10 +453,6 @@ namespace mycollections
         }
 
         //std::cout << " Recursion: left:"<< leftSize << ", right:" << rightSize << std::endl;
-        //std::cout << " Left Array: "<<std::endl;
-        //print_array(leftArray, leftSize);
-        //std::cout << " Right Array: "<<std::endl;
-        //print_array(rightArray, rightSize);
         // recursion: going down
         trueMergeSortRecursiveDescending(leftArray, (leftSize-1) / 2, leftSize - 1);
         trueMergeSortRecursiveDescending(rightArray, (rightSize-1) / 2, rightSize - 1);
@@ -471,6 +470,11 @@ namespace mycollections
          * On ajoute à chaque fois l'element le plus petit (grand) entre les premiers elements de chaque subarray
          * Il suffit de comparer les premiers elements de chaque subarray parce qu'on est sur qu'il sont triés
          */
+
+        //std::cout << " Merging\n Left Array: "<<std::endl;
+        //print_array(leftArray, leftSize);
+        //std::cout << " Right Array: "<<std::endl;
+        //print_array(rightArray, rightSize);
         for (int i = 0; i < mergedSize; i++)
         { // descending order
             if (leftIndex >= leftSize || rightIndex >= rightSize)
@@ -478,18 +482,20 @@ namespace mycollections
                 mergedIndex = i;
                 break; // break if one subarray has no more elements
             }
-            if (leftArray[leftIndex] > rightArray[rightIndex])
+            if (leftArray[leftIndex] >= rightArray[rightIndex])
             {
                 collection[i] = leftArray[leftIndex];
                 leftIndex++;
             }
-            else if (rightArray[rightIndex] > leftArray[leftIndex])
+            else// if (rightArray[rightIndex] > leftArray[leftIndex])
             {
                 collection[i] = rightArray[rightIndex];
                 rightIndex++;
             }
         }
-
+        //std::cout << " Result One is " << std::endl;
+        //print_array(collection, mergedSize);
+        
         //std::cout << " Adding remaining elements: left:"<< leftSize << "(" << leftIndex << "), right:" << rightSize << "(" << rightIndex << ")" << std::endl;
         // Ajout des elements restants du subarray restant
         if (leftIndex >= leftSize) // du coup il en reste à droite
@@ -507,7 +513,9 @@ namespace mycollections
                 leftIndex++;
             }
         }
-
+        //std::cout << " Result Two is " << std::endl;
+        //print_array(collection, mergedSize);
+        //std::cout << "--------------------\n";
         // freeing ununsed memory
         delete[] rightArray;
         delete[] leftArray;
