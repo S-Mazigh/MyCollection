@@ -14,6 +14,9 @@ using namespace mycollections;
 using u32 = uint_least32_t; // u32 is the smallest datatype supported by the system that can hold at least 32 bits
 using engine = std::mt19937;
 
+template <typename T>
+bool checkingOrder(std::vector<T> const &a, std::vector<T> const &b);
+
 int main (int argc, char *argv[]) {
     if(argc < 1) {
         std::cerr << "Please give the size of the test collection as a program argument !" << std::endl;
@@ -39,11 +42,12 @@ int main (int argc, char *argv[]) {
     std::stringstream result_print;
     std::chrono::duration<double> elapsed_seconds;
     std::chrono::_V2::system_clock::time_point start, end;
+    bool orderCheck = false;
     
     // the same initial collection: sorted in a descending fashion
     mytestCollection.bubbleSort(false);
-    std::cout << "Initial Collection: " << mytestCollection << std::endl;
-    
+    MyCollection<u32> forChecking(mytestCollection);
+    //std::cout << "Initial Collection: " << mytestCollection << std::endl;
     
     // BubbleSort
     prettyPrint::boxedPrint("BubbleSort", 20, 1);
@@ -54,10 +58,12 @@ int main (int argc, char *argv[]) {
     mytestCollection.bubbleSort(false);
     
     end = std::chrono::system_clock::now();
-    
+    orderCheck = checkingOrder(mytestCollection.getCollection(), forChecking.getCollection());
+
     result_print.str(" "); // to clear the stream we need to replace the underlying string
     elapsed_seconds = end - start;
-    result_print << "Time Taken: " << elapsed_seconds.count() << "s";
+    result_print << "(" << orderCheck << ") Time Taken: " << elapsed_seconds.count() << "s";
+    
     
     prettyPrint::boxedPrint(result_print.str());
     
@@ -70,10 +76,11 @@ int main (int argc, char *argv[]) {
     mytestCollection.selectionSort(false);
     
     end = std::chrono::system_clock::now();
-    
+    orderCheck = checkingOrder(mytestCollection.getCollection(), forChecking.getCollection());
+
     result_print.str(" "); // to clear the stream we need to replace the underlying string
     elapsed_seconds = end - start;
-    result_print << "Time Taken: " << elapsed_seconds.count() << "s";
+    result_print << "(" << orderCheck << ") Time Taken: " << elapsed_seconds.count() << "s";
     
     prettyPrint::boxedPrint(result_print.str());
 
@@ -87,14 +94,43 @@ int main (int argc, char *argv[]) {
     
     end = std::chrono::system_clock::now();
     
+    orderCheck = checkingOrder(mytestCollection.getCollection(), forChecking.getCollection());
+
     result_print.str(" "); // to clear the stream we need to replace the underlying string
     elapsed_seconds = end - start;
-    result_print << "Time Taken: " << elapsed_seconds.count() << "s";
+    result_print << "(" << orderCheck << ") Time Taken: " << elapsed_seconds.count() << "s";
     
     prettyPrint::boxedPrint(result_print.str());
 
+    // MergedSort
+    prettyPrint::boxedPrint("MergedSort", 20, 1);
+    
+    start = std::chrono::system_clock::now();
+    
+    mytestCollection.mergeSortRecursive();
+    mytestCollection.mergeSortRecursive(false);
+    
+    end = std::chrono::system_clock::now();
+    orderCheck = checkingOrder(mytestCollection.getCollection(), forChecking.getCollection());
+
+    result_print.str(" "); // to clear the stream we need to replace the underlying string
+    elapsed_seconds = end - start;
+    result_print << "(" << orderCheck << ") Time Taken: " << elapsed_seconds.count() << "s";
+    prettyPrint::boxedPrint(result_print.str());
 
     std::cout << "Main end" << std::endl;
 
     return 0;
+}
+
+template <typename T>
+bool checkingOrder(std::vector<T> const &a, std::vector<T> const &b) {
+    if(a.size() != b.size())
+        return false;
+    
+    for(int i=0; i<a.size(); i++) {
+        if(a[i] != b[i])
+            return false;
+    }
+    return true;
 }
