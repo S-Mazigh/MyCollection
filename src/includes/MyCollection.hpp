@@ -1,9 +1,17 @@
 #pragma once
 #include <vector>
 #include <iostream>
+#include <random>
+#include <cctype>
+#include <cmath> // pour le log2 du quicksort (C11 nécessaire)
+#include "PrettyPrinting.hpp"
 
 namespace mycollections
 {
+    // for pseudo random number generator
+    // here using creates aliases for the long named types
+    using u32 = uint_least32_t; // u32 is the smallest datatype supported by the system that can hold at least 32 bits
+    using engine = std::mt19937;
 
     template <typename T>
     class MyCollection
@@ -13,8 +21,8 @@ namespace mycollections
         bool ascending;
         std::vector<T> collection;
 
-        void trueMergeSortRecursiveAscending(T* const collection, int const midpoint, int const end);
-        void trueMergeSortRecursiveDescending(T* const collection, int const midpoint, int const end);
+        void trueMergeSortRecursiveAscending(T *const collection, int const midpoint, int const end);
+        void trueMergeSortRecursiveDescending(T *const collection, int const midpoint, int const end);
 
     public:
         MyCollection(std::vector<T> &collection); // checks if collection is sorted
@@ -23,23 +31,27 @@ namespace mycollections
         void bubbleSort(bool ascending = true);
         void selectionSort(bool ascending = true);
         void insertionSort(bool ascending = true);
+
         // algorithms with divide and conquer approach
         void mergeSortRecursive(bool ascending = true);
         // void mergeSort(bool ascending = true);
-        void quickSort(bool nascending = true);
+        void quickSort(bool ascending = true, int maxLevels = 64); // par défaut support 2⁶⁴ niveaux
         void heapSort(bool ascending = true);
 
         // searching algos (comming in V0.5)
-        // int binarySearch(T value); // only if sorted
-        // int normalSearch(T value);
+        int binarySearch(T value); // only if sorted
+        int normalSearch(T value);
 
         // getters
         bool isSorted() const { return this->sorted; }
         bool isAscending() const { return this->ascending; }
-        std::vector<T> getCollection () const { return this->collection; }
+        std::vector<T> getCollection() const { return this->collection; }
 
         // setters
         void setCollection(std::vector<T> &collection) { this->collection = collection; }
+
+        // useful
+        void shamble(); // to be called after sorting to resort the elements in a random way
 
         // printing
         friend std::ostream &operator<<(std::ostream &stream, const MyCollection<T> &self)
@@ -65,6 +77,9 @@ namespace mycollections
      * In short, the compiler need to see the use of the template class with a specific type and the code of the template at the same time (same file).
      */
 
+    /**
+     * Dans les fonctions qui suivent la condition du ascending enveloppe toute la boucle de trie pour avoir le minimum possible de branchements (de ifs)
+     */
     template <typename T>
     MyCollection<T>::MyCollection(std::vector<T> &collection) : collection(collection)
     {
@@ -96,8 +111,9 @@ namespace mycollections
     }
 
     template <typename T>
-    MyCollection<T>::MyCollection(MyCollection &other): collection(other.collection), sorted(other.sorted), ascending(other.ascending) {
-        //std::cout<<"Other collection is at " << &other.collection[0] << " while this' collection is at: " << &this->collection[0] << std::endl;
+    MyCollection<T>::MyCollection(MyCollection &other) : collection(other.collection), sorted(other.sorted), ascending(other.ascending)
+    {
+        // std::cout<<"Other collection is at " << &other.collection[0] << " while this' collection is at: " << &this->collection[0] << std::endl;
     }
 
     template <typename T>
@@ -114,6 +130,32 @@ namespace mycollections
         T tmp = val1;
         val1 = val2;
         val2 = tmp;
+    }
+
+    /**
+     * To reordonne the collection in a random way.
+     */
+    template <typename T>
+    void MyCollection<T>::shamble()
+    {
+
+        // setting the pseudo random number generator
+        std::random_device os_seed; // in linux it uses /dev/random
+        const u32 seed = os_seed();
+
+        engine generator(seed);
+        std::uniform_int_distribution<u32> distribute(0, this->collection.size() - 1);
+
+        T tmp;
+        u32 r;
+
+        for (int i = 0; i < this->collection.size(); i++)
+        {
+            r = distribute(generator);
+            tmp = this->collection.at(i);
+            this->collection.at(i) = this->collection.at(r);
+            this->collection.at(r) = tmp;
+        }
     }
 
     /**
@@ -290,6 +332,7 @@ namespace mycollections
      * 1- Split en deux sub arrays
      * 2- Une fois sub array d'un element ou zero arret
      * 3- Merge et sort les elements
+     * Dans le merge il faut faire attention à bien verifier le cas des égalité vu que là en copie des valeurs et non les swapper (autrement dit on peut les perdre)
      */
     template <typename T>
     void MyCollection<T>::mergeSortRecursive(bool ascending)
@@ -299,15 +342,15 @@ namespace mycollections
             std::cout << "Collection is already sorted!" << std::endl;
             return;
         }
-        
+
         // r est le end enfaite
         int r = this->collection.size() - 1;
         if (r <= 0) // un seul element ou vide
             return;
         int m = r / 2;
 
-        //std::cout<<"Calling true recursive"<<std::endl;
-        if(ascending)
+        // std::cout<<"Calling true recursive"<<std::endl;
+        if (ascending)
             trueMergeSortRecursiveAscending(&this->collection[0], m, r);
         else
             trueMergeSortRecursiveDescending(&this->collection[0], m, r);
@@ -315,32 +358,33 @@ namespace mycollections
         this->ascending = ascending;
     }
 
-    template<typename T>
-    void print_array(T *array, int size) {
-        std::cout<<"\t";
-        for(int i=0; i<size; i++)
-            std::cout<<"["<<i<<"]:"<<array[i]<<" ";
-        std::cout<<std::endl;
+    template <typename T>
+    void print_array(T *array, int size)
+    {
+        std::cout << "\t";
+        for (int i = 0; i < size; i++)
+            std::cout << "[" << i << "]:" << array[i] << " ";
+        std::cout << std::endl;
     }
 
     template <typename T>
-    void MyCollection<T>::trueMergeSortRecursiveAscending(T* const collection, int const midpoint, int const end)
+    void MyCollection<T>::trueMergeSortRecursiveAscending(T *const collection, int const midpoint, int const end)
     {
-        //std::cout << "Initiating method with midpoint: "<<midpoint<<", end: "<<end<<std::endl;
-        // recursion base
-        if (end <= 0) { // if one element or empty
-            //std::cout<<" Base condition reached "<< std::endl;
+        // std::cout << "Initiating method with midpoint: "<<midpoint<<", end: "<<end<<std::endl;
+        //  recursion base
+        if (end <= 0)
+        { // if one element or empty
+            // std::cout<<" Base condition reached "<< std::endl;
             return;
         }
-            
 
         // Enough elements are present
         // creating the temp arrays
         int leftSize = midpoint + 1;
         int rightSize = end - midpoint;
 
-        T* const leftArray = new T[leftSize]; // const after * then pointer is const
-        T* const rightArray = new T[rightSize];
+        T *const leftArray = new T[leftSize]; // const after * then pointer is const
+        T *const rightArray = new T[rightSize];
 
         // [0] to [midpoint]
         for (int i = 0; i < leftSize; i++)
@@ -351,13 +395,13 @@ namespace mycollections
         // [midpoint + 1] to [end]
         for (int i = 0; i < rightSize; i++)
         {
-            rightArray[i] = collection[i+midpoint+1];
+            rightArray[i] = collection[i + midpoint + 1];
         }
 
-        //std::cout << " Recursion: left:"<< leftSize << ", right:" << rightSize << std::endl;
-        // recursion: going down
-        trueMergeSortRecursiveAscending(leftArray, (leftSize-1) / 2, leftSize - 1);
-        trueMergeSortRecursiveAscending(rightArray, (rightSize-1) / 2, rightSize - 1);
+        // std::cout << " Recursion: left:"<< leftSize << ", right:" << rightSize << std::endl;
+        //  recursion: going down
+        trueMergeSortRecursiveAscending(leftArray, (leftSize - 1) / 2, leftSize - 1);
+        trueMergeSortRecursiveAscending(rightArray, (rightSize - 1) / 2, rightSize - 1);
 
         // recursion: going up
         // we need to merge and sort
@@ -373,11 +417,11 @@ namespace mycollections
          * Il suffit de comparer les premiers elements de chaque subarray parce qu'on est sur qu'il sont triés
          */
 
-        //std::cout << "Merging" << std::endl;
-        //std::cout << " Left Array: "<<std::endl;
-        //print_array(leftArray, leftSize);
-        //std::cout << " Right Array: "<<std::endl;
-        //print_array(rightArray, rightSize);
+        // std::cout << "Merging" << std::endl;
+        // std::cout << " Left Array: "<<std::endl;
+        // print_array(leftArray, leftSize);
+        // std::cout << " Right Array: "<<std::endl;
+        // print_array(rightArray, rightSize);
 
         for (int i = 0; i < mergedSize; i++)
         { // ascending order
@@ -391,15 +435,15 @@ namespace mycollections
                 collection[i] = leftArray[leftIndex];
                 leftIndex++;
             }
-            else //if (rightArray[rightIndex] < leftArray[leftIndex])
+            else // if (rightArray[rightIndex] < leftArray[leftIndex])
             {
                 collection[i] = rightArray[rightIndex];
                 rightIndex++;
             }
         }
 
-        //std::cout << " Adding remaining elements: left:"<< leftSize << "(" << leftIndex << "), right:" << rightSize << "(" << rightIndex << ")" << std::endl;
-        // Ajout des elements restants du subarray restant
+        // std::cout << " Adding remaining elements: left:"<< leftSize << "(" << leftIndex << "), right:" << rightSize << "(" << rightIndex << ")" << std::endl;
+        //  Ajout des elements restants du subarray restant
         if (leftIndex >= leftSize) // du coup il en reste à droite
         {
             for (int i = mergedIndex; i < mergedSize; i++)
@@ -408,7 +452,8 @@ namespace mycollections
                 rightIndex++;
             }
         }
-        else if(rightIndex >= rightSize) { // il en reste à gauche
+        else if (rightIndex >= rightSize)
+        { // il en reste à gauche
             for (int i = mergedIndex; i < mergedSize; i++)
             {
                 collection[i] = leftArray[leftIndex];
@@ -422,23 +467,23 @@ namespace mycollections
     }
 
     template <typename T>
-    void MyCollection<T>::trueMergeSortRecursiveDescending(T* const collection, int const midpoint, int const end)
+    void MyCollection<T>::trueMergeSortRecursiveDescending(T *const collection, int const midpoint, int const end)
     {
-        //std::cout << "Initiating method with midpoint: "<<midpoint<<", end: "<<end<<std::endl;
-        // recursion base
-        if (end <= 0) { // if one element or empty
-            //std::cout<<" Base condition reached "<< std::endl;
+        // std::cout << "Initiating method with midpoint: "<<midpoint<<", end: "<<end<<std::endl;
+        //  recursion base
+        if (end <= 0)
+        { // if one element or empty
+            // std::cout<<" Base condition reached "<< std::endl;
             return;
         }
-            
 
         // Enough elements are present
         // creating the temp arrays
         int leftSize = midpoint + 1;
         int rightSize = end - midpoint;
 
-        T* const leftArray = new T[leftSize]; // const after * then pointer is const
-        T* const rightArray = new T[rightSize];
+        T *const leftArray = new T[leftSize]; // const after * then pointer is const
+        T *const rightArray = new T[rightSize];
 
         // [0] to [midpoint]
         for (int i = 0; i < leftSize; i++)
@@ -449,13 +494,13 @@ namespace mycollections
         // [midpoint + 1] to [end]
         for (int i = 0; i < rightSize; i++)
         {
-            rightArray[i] = collection[i+midpoint+1];
+            rightArray[i] = collection[i + midpoint + 1];
         }
 
-        //std::cout << " Recursion: left:"<< leftSize << ", right:" << rightSize << std::endl;
-        // recursion: going down
-        trueMergeSortRecursiveDescending(leftArray, (leftSize-1) / 2, leftSize - 1);
-        trueMergeSortRecursiveDescending(rightArray, (rightSize-1) / 2, rightSize - 1);
+        // std::cout << " Recursion: left:"<< leftSize << ", right:" << rightSize << std::endl;
+        //  recursion: going down
+        trueMergeSortRecursiveDescending(leftArray, (leftSize - 1) / 2, leftSize - 1);
+        trueMergeSortRecursiveDescending(rightArray, (rightSize - 1) / 2, rightSize - 1);
 
         // recursion: going up
         // we need to merge and sort
@@ -471,10 +516,10 @@ namespace mycollections
          * Il suffit de comparer les premiers elements de chaque subarray parce qu'on est sur qu'il sont triés
          */
 
-        //std::cout << " Merging\n Left Array: "<<std::endl;
-        //print_array(leftArray, leftSize);
-        //std::cout << " Right Array: "<<std::endl;
-        //print_array(rightArray, rightSize);
+        // std::cout << " Merging\n Left Array: "<<std::endl;
+        // print_array(leftArray, leftSize);
+        // std::cout << " Right Array: "<<std::endl;
+        // print_array(rightArray, rightSize);
         for (int i = 0; i < mergedSize; i++)
         { // descending order
             if (leftIndex >= leftSize || rightIndex >= rightSize)
@@ -487,17 +532,17 @@ namespace mycollections
                 collection[i] = leftArray[leftIndex];
                 leftIndex++;
             }
-            else// if (rightArray[rightIndex] > leftArray[leftIndex])
+            else // if (rightArray[rightIndex] > leftArray[leftIndex])
             {
                 collection[i] = rightArray[rightIndex];
                 rightIndex++;
             }
         }
-        //std::cout << " Result One is " << std::endl;
-        //print_array(collection, mergedSize);
-        
-        //std::cout << " Adding remaining elements: left:"<< leftSize << "(" << leftIndex << "), right:" << rightSize << "(" << rightIndex << ")" << std::endl;
-        // Ajout des elements restants du subarray restant
+        // std::cout << " Result One is " << std::endl;
+        // print_array(collection, mergedSize);
+
+        // std::cout << " Adding remaining elements: left:"<< leftSize << "(" << leftIndex << "), right:" << rightSize << "(" << rightIndex << ")" << std::endl;
+        //  Ajout des elements restants du subarray restant
         if (leftIndex >= leftSize) // du coup il en reste à droite
         {
             for (int i = mergedIndex; i < mergedSize; i++)
@@ -506,18 +551,131 @@ namespace mycollections
                 rightIndex++;
             }
         }
-        else if(rightIndex >= rightSize) { // il en reste à gauche
+        else if (rightIndex >= rightSize)
+        { // il en reste à gauche
             for (int i = mergedIndex; i < mergedSize; i++)
             {
                 collection[i] = leftArray[leftIndex];
                 leftIndex++;
             }
         }
-        //std::cout << " Result Two is " << std::endl;
-        //print_array(collection, mergedSize);
-        //std::cout << "--------------------\n";
-        // freeing ununsed memory
+        // std::cout << " Result Two is " << std::endl;
+        // print_array(collection, mergedSize);
+        // std::cout << "--------------------\n";
+        //  freeing ununsed memory
         delete[] rightArray;
         delete[] leftArray;
+    }
+
+    /**
+     * Pour l'instant le pivot est toujours le dernier elément, une future version donnera le choix à l'utilisateur de le modifier.
+     * Dans un round: l'index 's' garde l'index du dernier element du subarray de gauche.
+     * Si un element est plus petit (grand) que le pivot ce dernier est swappé avec 's+1'
+     * Les rounds se succede jusqu'à ce qu'il y est qu'un seul element dans le subarray restant
+     * O(n²) si on trie un tableau pré ordonnée dans l'ordre inverse voulue
+     *
+     * @param ascending est true par défaut
+     * @param maxLevels est 64 par défaut, i.e. la fonction supporte des taille de tableau allont jusqu'à 2⁶⁴.
+     */
+    template <typename T>
+    void MyCollection<T>::quickSort(bool ascending, int maxLevels)
+    {
+
+        // Pour eviter un fail relié à la taille limité des tableaux de mémoire des start et end j'ai ajouté
+        if (log2(this->collection.size()) > (double)maxLevels)
+        {
+            myprint::log("Attention! La taille de votre collection pourrait causer une erreur, ceci est due à la taille limitée des tableaux stockant les index de debut et de fin de chaque subarrays (starts[maxLevels] et ends[maxLevels]).\n Veuillez mettre comme deuxième parametre une valeur supérieure au log_2(taille de votre collection).\n", ERROR_LOG);
+            return;
+        }
+        /**
+         *  A chaque round on consomme un start et end, et on génére au max deux starts et deux ends.
+         *  Les tableaux suivent une logique LIFO : ainsi on a besion que d'une variable supplementaire le STACK POINTER
+         *  Je me suis dis que si on voulait une FIFO on devrait shifter à chaque fois les elements à droite (pour selectionner l'index 0)
+         */
+        int sp = 0;
+        int start[maxLevels], end[maxLevels];
+
+        // utilisées par chaque round de façon independante
+        // int pivot;
+        int s, start_round, end_round;
+
+        // INITIALISATION
+        start[sp] = 0;
+        end[sp] = this->collection.size() - 1;
+        sp++; // sp est à 1 avant d'entrer dans la boucle.
+
+        if (ascending)
+        {
+            while (sp > 0) // s'arrete s'il reste plus de subarray à traverser
+            {
+                start_round = start[--sp]; // d'abord decremente puis récupére la valeur
+                end_round = end[sp];
+                // le pivot est toujours le dernier element
+                // pivot = end_round;
+                s = start_round - 1; // sans le -1 soit on suppose que le premier element est plus petit(grand) que le pivot
+                for (int i = start_round; i < end_round; i++)
+                {                                                                // des swaps inutiles peuvent arrivés, on s'arrete juste avant le pivot
+                    if (this->collection.at(i) < this->collection.at(end_round)) // asceding order
+                    {
+                        s++;
+                        swap(this->collection.at(s), this->collection.at(i));
+                    }
+                }
+                // maintenant on met le pivot entre les deux subarray
+                swap(this->collection.at(s + 1), this->collection.at(end_round));
+                /**
+                 * ajouter les deux subarrays generés
+                 * Exemple: sp = 1 à l'entré de la boucle puis devient 0 aprés le start_round = start[--sp]
+                 * Si les deux sont ajouté:
+                 *  1 - start[0] reste comme il était, end[0] est ecrasé avec s et sp = 1
+                 *  2 - start[1] est mis à jour, end[1] = end_round et sp = 2
+                 * Si seulement le 1er est ajouté:
+                 *  1 - start[0] reste comme il était, end[0] est ecrasé avec s et sp = 1
+                 * Si seuelemnt le 2eme est ajouté:
+                 *  2 - start[0] est mis à jour, end[0] = end_round et sp = 1. C'est vrai que le end[0] = end_round est inutile
+                 * */
+                if (start_round < s) // subarray de gauche a plus d'un element
+                {
+                    // start[sp] ne change pas
+                    end[sp++] = s; // met la valeur puis incremente
+                }
+                if ((s + 2) < end_round) // subarray de droite a plus d'un element
+                {
+                    start[sp] = s + 2;
+                    end[sp++] = end_round;
+                }
+            }
+        }
+        else
+        {
+            while (sp > 0) // s'arrete s'il reste plus de subarray à traverser
+            {
+                start_round = start[--sp];
+                end_round = end[sp];
+                // le pivot est toujours le dernier element
+                // pivot = end_round;
+                s = start_round - 1; // sans le -1 soit on suppose que le premier element est plus petit(grand) que le pivot
+                for (int i = start_round; i < end_round; i++)
+                {                                                                // des swaps inutiles peuvent arrivés, on s'arrete juste avant le pivot
+                    if (this->collection.at(i) > this->collection.at(end_round)) // desceding order
+                    {
+                        s++;
+                        swap(this->collection.at(s), this->collection.at(i));
+                    }
+                }
+                // maintenant on met le pivot entre les deux subarray
+                swap(this->collection.at(s + 1), this->collection.at(end_round));
+                if (start_round < s) // subarray de gauche a plus d'un element
+                {
+                    // start[sp] ne change pas
+                    end[sp++] = s;
+                }
+                if ((s + 2) < end_round) // subarray de droite a plus d'un element
+                {
+                    start[sp] = s + 2;
+                    end[sp++] = end_round;
+                }
+            }
+        }
     }
 }

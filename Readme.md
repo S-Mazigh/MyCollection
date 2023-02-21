@@ -5,8 +5,8 @@
     - *insertionSort*: O(n²). Un tout petit peu plus rapide que bubbleSort. (En recherche d'optimisation)
     - *selectionSort*: O(n²). Trie le max et le min en une boucle. Plus rapide que bubbleSort et insertionSort.
   - **Divide and conquer algorithms:**
-    - *mergeSort*: (à venir)
-    - *quickSort*: (à venir)
+    - *mergeSort*: O(n*logn) en moyenne. Implementation avec récursion
+    - *quickSort*: O(n*logn) en moyenne. Implementation sans récursion
     - *heapSort*: (à venir)
 - La librairie **MyPrintLibrary** est juste là pour avoir quelques fonctions de print plus interessants.
 - Pour compiler le main:
