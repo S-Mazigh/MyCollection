@@ -39,15 +39,14 @@ namespace myprint
         std::cout << "+" << std::string(printSize + paddingHor * 2, '=') << "+" << std::endl; // bottom border
     }
 
-    /**
-     * si le niveau du log est plus important que le niveau courant j'affiche
-     * Par exemple si le niveau courant est à INFO = 1, j'affiche que le niveau INFO et ERROR vu que ERROR > INFO
-     * Par défaut le niveau du log est à DEBUG et le niveau courant est à ERROR.
-     */
-    void log(const std::string &to_print, char level)
-    {
-        if (level >= CURRENT_LEVEL)
-            std::cout << to_print;
-    }
+    void logger::log(const std::string &to_print, char level)
+        {
+            if (level > CURRENT_LEVEL)
+                std::cout << to_print << std::endl;
+        }
+
+    char logger::CURRENT_LEVEL = ERROR_LOG;
+
+
 
 }

@@ -138,7 +138,7 @@ namespace mycollections
     template <typename T>
     void MyCollection<T>::shamble()
     {
-
+        //std::cout << "Before: "<< *this << std::endl;
         // setting the pseudo random number generator
         std::random_device os_seed; // in linux it uses /dev/random
         const u32 seed = os_seed();
@@ -156,6 +156,8 @@ namespace mycollections
             this->collection.at(i) = this->collection.at(r);
             this->collection.at(r) = tmp;
         }
+
+        //std::cout << "After: "<< *this << std::endl;
     }
 
     /**
@@ -300,7 +302,7 @@ namespace mycollections
             {
                 j = i;
 
-                // on essaie de trouver la bonne place pour l'element j (c'est pas vrai vu que le swap va changer cette valeur)
+                // on essaie de trouver la bonne place pour l'element j dans la partie triée
                 // on check d'abord la valeur de j pour ne pas avoir d'erreur d'acces pour le .at(j)
                 while (j >= 0 && this->collection.at(j) > this->collection.at(j + 1))
                 {
@@ -584,7 +586,7 @@ namespace mycollections
         // Pour eviter un fail relié à la taille limité des tableaux de mémoire des start et end j'ai ajouté
         if (log2(this->collection.size()) > (double)maxLevels)
         {
-            myprint::log("Attention! La taille de votre collection pourrait causer une erreur, ceci est due à la taille limitée des tableaux stockant les index de debut et de fin de chaque subarrays (starts[maxLevels] et ends[maxLevels]).\n Veuillez mettre comme deuxième parametre une valeur supérieure au log_2(taille de votre collection).\n", ERROR_LOG);
+            myprint::logger::log("Attention! La taille de votre collection pourrait causer une erreur, ceci est due à la taille limitée des tableaux stockant les index de debut et de fin de chaque subarrays (starts[maxLevels] et ends[maxLevels]).\n Veuillez mettre comme deuxième parametre une valeur supérieure au log_2(taille de votre collection).\n", ERROR_LOG);
             return;
         }
         /**
