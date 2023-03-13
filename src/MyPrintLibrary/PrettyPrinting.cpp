@@ -3,7 +3,6 @@
 #include <PrettyPrinting.hpp>
 
 
-char CURRENT_LEVEL = ERROR_LOG;
 namespace myprint
 {
     /***

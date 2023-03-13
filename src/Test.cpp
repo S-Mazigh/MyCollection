@@ -69,9 +69,7 @@ int main(int argc, char *argv[])
     start = std::chrono::system_clock::now();
 
     mytestCollection.bubbleSort();
-
     mytestCollection.shamble(); // O(N) rajouté dans le calcul de temps
-
     mytestCollection.bubbleSort(false);
 
     end = std::chrono::system_clock::now();
@@ -92,9 +90,7 @@ int main(int argc, char *argv[])
     start = std::chrono::system_clock::now();
 
     mytestCollection.selectionSort();
-
     mytestCollection.shamble();
-
     mytestCollection.selectionSort(false);
 
     end = std::chrono::system_clock::now();
@@ -114,9 +110,7 @@ int main(int argc, char *argv[])
     start = std::chrono::system_clock::now();
 
     mytestCollection.insertionSort();
-
     mytestCollection.shamble();
-
     mytestCollection.insertionSort(false);
 
     end = std::chrono::system_clock::now();
@@ -137,16 +131,14 @@ int main(int argc, char *argv[])
     start = std::chrono::system_clock::now();
 
     mytestCollection.mergeSortRecursive();
-
     mytestCollection.shamble();
-
     mytestCollection.mergeSortRecursive(false);
 
     end = std::chrono::system_clock::now();
 
-    result_print.str(" ");
+    /*result_print.str(" ");
     result_print << "After Merge Sort: " << mytestCollection << std::endl;
-    result_print.log(DEBUG_LOG);
+    result_print.log(DEBUG_LOG);*/
 
     orderCheck = checkingOrder(mytestCollection.getCollection(), initial_size, false);
 
@@ -168,9 +160,9 @@ int main(int argc, char *argv[])
 
     end = std::chrono::system_clock::now();
 
-    result_print.str(" ");
+    /*result_print.str(" ");
     result_print << "After Quick Sort: " << mytestCollection << std::endl;
-    result_print.log(DEBUG_LOG);
+    result_print.log(DEBUG_LOG);*/
 
     orderCheck = checkingOrder(mytestCollection.getCollection(), initial_size, false);
 
@@ -179,6 +171,28 @@ int main(int argc, char *argv[])
     result_print << "(" << orderCheck << ") Time Taken: " << elapsed_seconds.count() << "s";
 
     myprint::boxedPrint(result_print.str());
+
+    // HeapSort
+    myprint::boxedPrint("HeapSort", 20, 1);
+
+    mytestCollection.shamble();
+
+    start = std::chrono::system_clock::now();
+
+    mytestCollection.heapSort();
+    mytestCollection.shamble();
+    mytestCollection.heapSort(false);
+
+    end = std::chrono::system_clock::now();
+
+    orderCheck = checkingOrder(mytestCollection.getCollection(), initial_size, false);
+
+    result_print.str(" "); // to clear the stream we need to replace the underlying string
+    elapsed_seconds = end - start;
+    result_print << "(" << orderCheck << ") Time Taken: " << elapsed_seconds.count() << "s";
+
+    myprint::boxedPrint(result_print.str());
+
     std::cout << "Main end" << std::endl;
 
     return 0;

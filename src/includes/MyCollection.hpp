@@ -21,8 +21,13 @@ namespace mycollections
         bool ascending;
         std::vector<T> collection;
 
+        // For mergeSort
         void trueMergeSortRecursiveAscending(T *const collection, int const midpoint, int const end);
         void trueMergeSortRecursiveDescending(T *const collection, int const midpoint, int const end);
+
+        // For heapSort
+        void heapifyAscending(int size, int root);
+        void heapifyDescending(int size, int root);
 
     public:
         MyCollection(std::vector<T> &collection); // checks if collection is sorted
@@ -132,14 +137,23 @@ namespace mycollections
         val2 = tmp;
     }
 
+    template <typename T>
+    void print_array(T *array, int size)
+    {
+        std::cout << "\t";
+        for (int i = 0; i < size; i++)
+            std::cout << "[" << i << "]:" << array[i] << " ";
+        std::cout << std::endl;
+    }
+
     /**
      * To reordonne the collection in a random way.
      */
     template <typename T>
     void MyCollection<T>::shamble()
     {
-        //std::cout << "Before: "<< *this << std::endl;
-        // setting the pseudo random number generator
+        // std::cout << "Before: "<< *this << std::endl;
+        //  setting the pseudo random number generator
         std::random_device os_seed; // in linux it uses /dev/random
         const u32 seed = os_seed();
 
@@ -157,7 +171,7 @@ namespace mycollections
             this->collection.at(r) = tmp;
         }
 
-        //std::cout << "After: "<< *this << std::endl;
+        // std::cout << "After: "<< *this << std::endl;
     }
 
     /**
@@ -361,15 +375,6 @@ namespace mycollections
     }
 
     template <typename T>
-    void print_array(T *array, int size)
-    {
-        std::cout << "\t";
-        for (int i = 0; i < size; i++)
-            std::cout << "[" << i << "]:" << array[i] << " ";
-        std::cout << std::endl;
-    }
-
-    template <typename T>
     void MyCollection<T>::trueMergeSortRecursiveAscending(T *const collection, int const midpoint, int const end)
     {
         // std::cout << "Initiating method with midpoint: "<<midpoint<<", end: "<<end<<std::endl;
@@ -416,7 +421,7 @@ namespace mycollections
          * Les indexes des subArrays s'increment de facon independante
          * Si l'element d'un subarray est ajouté au mergedArray (collection) son index s'incremente
          * On ajoute à chaque fois l'element le plus petit (grand) entre les premiers elements de chaque subarray
-         * Il suffit de comparer les premiers elements de chaque subarray parce qu'on est sur qu'il sont triés
+         * Il suffit de comparer les premiers elements de chaque subarray parce qu'on est sur qu'ils sont triés
          */
 
         // std::cout << "Merging" << std::endl;
@@ -511,13 +516,6 @@ namespace mycollections
         int mergedIndex = 0;
         int mergedSize = end + 1; // variable can be removed
 
-        /**
-         * Les indexes des subArrays s'increment de facon independante
-         * Si l'element d'un subarray est ajouté au mergedArray (collection) son index s'incremente
-         * On ajoute à chaque fois l'element le plus petit (grand) entre les premiers elements de chaque subarray
-         * Il suffit de comparer les premiers elements de chaque subarray parce qu'on est sur qu'il sont triés
-         */
-
         // std::cout << " Merging\n Left Array: "<<std::endl;
         // print_array(leftArray, leftSize);
         // std::cout << " Right Array: "<<std::endl;
@@ -574,10 +572,10 @@ namespace mycollections
      * Dans un round: l'index 's' garde l'index du dernier element du subarray de gauche.
      * Si un element est plus petit (grand) que le pivot ce dernier est swappé avec 's+1'
      * Les rounds se succede jusqu'à ce qu'il y est qu'un seul element dans le subarray restant
-     * O(n²) si on trie un tableau pré ordonnée dans l'ordre inverse voulue
+     * O(n²) si on trie un tableau pré ordonnée dans l'ordre inverse
      *
      * @param ascending est true par défaut
-     * @param maxLevels est 64 par défaut, i.e. la fonction supporte des taille de tableau allont jusqu'à 2⁶⁴.
+     * @param maxLevels est 64 par défaut, i.e. la fonction supporte des taille de tableau allant jusqu'à 2⁶⁴.
      */
     template <typename T>
     void MyCollection<T>::quickSort(bool ascending, int maxLevels)
@@ -591,8 +589,7 @@ namespace mycollections
         }
         /**
          *  A chaque round on consomme un start et end, et on génére au max deux starts et deux ends.
-         *  Les tableaux suivent une logique LIFO : ainsi on a besion que d'une variable supplementaire le STACK POINTER
-         *  Je me suis dis que si on voulait une FIFO on devrait shifter à chaque fois les elements à droite (pour selectionner l'index 0)
+         *  Les tableaux suivent une logique LIFO : ainsi on a besoin que d'une variable supplementaire le STACK POINTER.
          */
         int sp = 0;
         int start[maxLevels], end[maxLevels];
@@ -614,7 +611,7 @@ namespace mycollections
                 end_round = end[sp];
                 // le pivot est toujours le dernier element
                 // pivot = end_round;
-                s = start_round - 1; // sans le -1 soit on suppose que le premier element est plus petit(grand) que le pivot
+                s = start_round - 1; // sans le -1 c'est comme si on supposait que le premier element est plus petit(grand) que le pivot
                 for (int i = start_round; i < end_round; i++)
                 {                                                                // des swaps inutiles peuvent arrivés, on s'arrete juste avant le pivot
                     if (this->collection.at(i) < this->collection.at(end_round)) // asceding order
@@ -679,5 +676,161 @@ namespace mycollections
                 }
             }
         }
+    }
+
+    /**
+     * Heap Sort permet d'avoir une complexité proche du quicksort et mergesort sans utiliser de mémoire en plus.
+     * Comme les subarrays dans merge sort et le stockage des index dans quicksort.
+     *
+     *  La collection va être lu comme un arbre binaire ou un noeud 'i' a ses enfants de droite et de gauche à 'i*2+1' et 'i*2+2' respectivement
+     * Avec cette logique la deuxieme moitié de la collection ne comprendra que des feuilles:
+     *  - Une collection de 11 elements [0..10] aura 6 feuilles: [0..4] sont des noeuds parents et [5..10] seront des feuilles
+
+     * Le heap sort fait en sorte de swaper un parent avec son plus grand (petit) descendants en commencant par le bas (index 4 dans l'exemple).
+     * En suivant cette méthode on aura à la fin d'une iteration le plus grand (petit) element comme racine. Ce dernier et deplacé vers sa place finale
+     * dans la collection. Et en refait la même chose sans le max (min) trouvé dans les iterations precendents jusqu'à avoir une collection triée.
+     */
+
+    /**
+     * Heapify va se charger de faire remonter le max vers la racine.
+     * @param size pour ignorer les derniers elements (déja triées)
+     * @param root nous permet de selectionner qu'une partie de l'arbre vu qu'on doit commencer du bas vers le haut pour trouver le max
+     * A chaque iteration on doit verifier que l'enfant qui recoit la valeur du parent respecte la condition (contient la valeur la plus grande).
+     *  - Par exemple quand le root contient le min cela arrivera souvent.
+     */
+    template <typename T>
+    void MyCollection<T>::heapifyAscending(int size, int root)
+    {
+        int left, right;
+        int largest = root;
+        bool rootSwaped;
+        do
+        {
+            rootSwaped = false;
+            left = root * 2 + 1;
+            right = root * 2 + 2; // left + 1;
+            //std::cout << "Root: " << root << "(" << this->collection.at(root) << "), Left: " << left;
+            if (left < size && collection.at(left) > collection.at(largest)) // largest = root à la premiere condition
+            {
+                //std::cout << "(" << this->collection.at(left) << ")";
+                largest = left;
+            }
+            //std::cout << ", Right: " << right;
+            if (right < size && collection.at(right) > collection.at(largest))
+            {
+                //std::cout << "(" << this->collection.at(right) << ")";
+                largest = right;
+            }
+            //std::cout << std::endl;
+            if (largest != root)
+            {
+                swap(collection.at(root), collection.at(largest));
+                rootSwaped = true; // un enfant a changer du coup on doit revérifier la condition chez les enfants.
+                root = largest;    // changement de root pour la prochaine iteration
+            }
+
+        } while (rootSwaped);
+    }
+
+    /**
+     * Heapify va se charger de faire remonter le min vers la racine.
+     * @param size pour ignorer les derniers elements (déja triées)
+     * @param root nous permet de selectionner qu'une partie de l'arbre vu qu'on doit commencer du bas vers le haut pour trouver le min
+     * A chaque iteration on doit verifier que l'enfant qui recoit la valeur du parent respecte la condition (contient la valeur la plus petite).
+     *  - Par exemple quand le root contient le max cela arrivera souvent.
+     */
+    template <typename T>
+    void MyCollection<T>::heapifyDescending(int size, int root)
+    {
+        int left, right;
+        int smallest = root;
+        bool rootSwaped;
+        do
+        {
+            rootSwaped = false;
+            left = root * 2 + 1;
+            right = root * 2 + 2; // left + 1;
+            //std::cout << "Root: " << root << "(" << this->collection.at(root) << "), Left: " << left;
+            if (left < size && collection.at(left) < collection.at(smallest)) // smallest = root à la premiere condition
+            {
+                //std::cout << "(" << this->collection.at(left) << ")";
+                smallest = left;
+            }
+            //std::cout << ", Right: " << right;
+            if (right < size && collection.at(right) < collection.at(smallest))
+            {
+                //std::cout << "(" << this->collection.at(right) << ")";
+                smallest = right;
+            }
+            //std::cout << std::endl;
+            if (smallest != root)
+            {
+                swap(collection.at(root), collection.at(smallest));
+                rootSwaped = true; // un enfant a changer du coup on doit revérifier la condition chez les enfants.
+                root = smallest;   // changement de root pour la prochaine iteration
+            }
+
+        } while (rootSwaped);
+    }
+
+    template <typename T>
+    void MyCollection<T>::heapSort(bool ascending)
+    {
+        if (this->sorted && !(ascending ^ this->ascending)) // if already sorted in wanted order: !(a^b) means a==b.
+        {
+            std::cout << "Collection is already sorted!" << std::endl;
+            return;
+        }
+
+        if (ascending)
+        {
+            // On commence par faire un premier heapify pour avoir un arbre où chaque parent est plus grand ou égale à ses descendants.
+            for (int i = (this->collection.size() / 2) - 1; i >= 0; i--)
+            {
+                heapifyAscending(this->collection.size(), i);
+            }
+            //std::cout << "First Heapify done: " << *this << std::endl;
+            /*
+            - Maintenant on va utiliser l'arbre obtenu pour trier notre collection dans l'ordre voulue.
+            - Le premier heapify nous assure qu'un noeud est plus grand que ses descendants, i.e. il a comme enfants les plus grandes valeurs de ses sous-arbres
+            - On faisant ca on forme un nouvelle arbre ou le root est le dernier elements de la collection (une feuille).
+                - Du coup on doit remonter son parent et le comparer avec l'autre sous-arbre.
+            */
+            for (int i = this->collection.size() - 1; i >= 0; i--)
+            {
+                swap(this->collection.at(i), this->collection.at(0));
+                /* Dans ce heapify on ne deplace que la valeur du nouveau root à son ancienne place (dernier element).
+                On a pas besoin de le refaire pour tous les noeuds avec enfants, un noeud va perdre un enfants à chaque iteration c'est tout.
+                */
+                heapifyAscending(i, 0);
+                //std::cout << "Heapify (" << i << ") done: " << *this << std::endl;
+            }
+        }
+        else // descending
+        {
+            // On commence par faire un premier heapify pour avoir un arbre où chaque parent est plus petit ou égale à ses descendants.
+            for (int i = (this->collection.size() / 2) - 1; i >= 0; i--)
+            {
+                heapifyDescending(this->collection.size(), i);
+            }
+            /*
+            - Maintenant on va utiliser l'arbre obtenu pour trier notre collection dans l'ordre voulue.
+            - Le premier heapify nous assure qu'un noeud est plus petit que ses descendants, i.e. il a comme enfants les plus petites valeurs de ses sous-arbres.
+            - On faisant ca on forme un nouvelle arbre ou le root est le dernier elements de la collection (une feuille).
+                - Du coup on doit remonter son parent et le comparer avec l'autre sous-arbre.
+            */
+            for (int i = this->collection.size() - 1; i >= 0; i--)
+            {
+                swap(this->collection.at(i), this->collection.at(0));
+                /* Dans ce heapify on ne deplace que la valeur du nouveau root à son ancienne place (dernier element).
+                On a pas besoin de le refaire pour tous les noeuds avec enfants, un noeud va perdre un enfants à chaque iteration c'est tout.
+                */
+                heapifyDescending(i, 0);
+                //std::cout << "Heapify (" << i << ") done: " << *this << std::endl;
+            }
+        }
+
+        this->sorted = true;
+        this->ascending = ascending;
     }
 }
